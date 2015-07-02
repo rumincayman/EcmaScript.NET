@@ -67,6 +67,11 @@ namespace EcmaScript.NET
             }
 
         }
+
+        internal int CurrentLineNumber { get; set; }
+
+        internal int[] LineNumberIndex { get { return this.lineNumberBuffer; } }
+
         /// <summary> Flag to indicate that the decompilation should omit the
         /// function header and trailing brace.
         /// </summary>
@@ -229,9 +234,11 @@ namespace EcmaScript.NET
                 // Use 2 chars to encode strings exceeding 32K, were the highest
                 // bit in the first char indicates presence of the next byte
                 sourceBuffer[sourceTop] = (char)(0x8000 | (int)((uint)L >> 16));
+                lineNumberBuffer[sourceTop] = this.CurrentLineNumber;
                 ++sourceTop;
             }
             sourceBuffer[sourceTop] = (char)L;
+            lineNumberBuffer[sourceTop] = this.CurrentLineNumber;
             ++sourceTop;
             str.ToCharArray(0, L).CopyTo(sourceBuffer, sourceTop);
             sourceTop = nextTop;
@@ -244,6 +251,7 @@ namespace EcmaScript.NET
                 IncreaseSourceCapacity(sourceTop + 1);
             }
             sourceBuffer[sourceTop] = c;
+            lineNumberBuffer[sourceTop] = this.CurrentLineNumber;
             ++sourceTop;
         }
 
@@ -260,6 +268,10 @@ namespace EcmaScript.NET
             char[] tmp = new char[newCapacity];
             Array.Copy(sourceBuffer, 0, tmp, 0, sourceTop);
             sourceBuffer = tmp;
+
+            int[] tmpLines = new int[newCapacity];
+            Array.Copy(lineNumberBuffer, 0, tmpLines, 0, sourceTop);
+            lineNumberBuffer = tmpLines;
         }
 
         private string SourceToString(int offset)
@@ -1020,6 +1032,7 @@ namespace EcmaScript.NET
         }
 
         private char[] sourceBuffer = new char[128];
+        private int[] lineNumberBuffer = new int[128];
 
         // Per script/function source buffer top: parent source does not include a
         // nested functions source and uses function index as a reference instead.

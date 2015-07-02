@@ -35,6 +35,9 @@ namespace EcmaScript.NET
             }
 
         }
+
+        public int[] LineNumberMap { get { return this.lineNumberIndex; } }
+
         // TokenInformation flags : currentFlaggedToken stores them together
         // with token type
         internal const int CLEAR_TI_MASK = 0xFFFF;
@@ -56,6 +59,7 @@ namespace EcmaScript.NET
 
         Decompiler decompiler;
         string encodedSource;
+        int[] lineNumberIndex;
 
         // The following are per function variables and should be saved/restored
         // during function parsing.
@@ -115,6 +119,8 @@ namespace EcmaScript.NET
 
                 while ((tt = ts.Token) == Token.CONDCOMMENT || tt == Token.KEEPCOMMENT)
                 {
+                    decompiler.CurrentLineNumber = ts.Lineno;
+
                     if (tt == Token.CONDCOMMENT)
                     {
                         /* Support for JScript conditional comments */
@@ -127,11 +133,14 @@ namespace EcmaScript.NET
                     }
                 }
 
+                decompiler.CurrentLineNumber = ts.Lineno;
+
                 if (tt == Token.EOL)
                 {
                     do
                     {
                         tt = ts.Token;
+                        decompiler.CurrentLineNumber = ts.Lineno;
 
                         if (tt == Token.CONDCOMMENT)
                         {
@@ -379,6 +388,7 @@ namespace EcmaScript.NET
             if (compilerEnv.isGeneratingSource())
             {
                 encodedSource = decompiler.EncodedSource;
+                lineNumberIndex = decompiler.LineNumberIndex;
             }
             this.decompiler = null; // It helps GC
 
